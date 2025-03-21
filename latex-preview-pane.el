@@ -385,9 +385,8 @@
 
 ;; set some messages for later
 (let ((installation-dir (if load-file-name (file-name-as-directory (file-name-directory load-file-name)) nil)))
-  (message installation-dir)
-  (defvar message-latex-preview-pane-welcome (lpp/get-message "~/.emacs.d/latex-preview-pane/message-latex-preview-pane-welcome.txt"))
-  (defvar message-no-preview-yet (lpp/get-message "~/.emacs.d/latex-preview-pane/message-no-preview-yet.txt")))
+  (defvar message-latex-preview-pane-welcome (lpp/get-message (expand-file-name "message-latex-preview-pane-welcome.txt" installation-dir)))
+  (defvar message-no-preview-yet (lpp/get-message (expand-file-name "message-no-preview-yet.txt" installation-dir))))
 
 
 (defgroup latex-preview-pane nil
