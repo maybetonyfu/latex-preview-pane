@@ -64,9 +64,8 @@
     (cond
      ((eq major-mode #'doc-view-mode) t)
      ((equal (buffer-name buffer) "*Latex Preview Pane Welcome*") t)
-     (t nil)
-     )
-    ))
+     ((equal (buffer-name buffer) "*Latex Preview Pane Errors*") t)
+     (t nil))))
 
 (defun lpp/window-containing-preview ()
   (let (windows i docViewWindow)
@@ -76,10 +75,8 @@
     (while (and (not docViewWindow) (<= i (length windows)))
       (let ((currentWindow (pop windows)))
         (if (lpp/is-doc-view-p (window-buffer currentWindow))
-          (setq docViewWindow currentWindow)
-        ))
-      (setq i (1+ i))
-      )
+          (setq docViewWindow currentWindow)))
+      (setq i (1+ i)))
     docViewWindow)))
 
 ;;
@@ -125,8 +122,7 @@
   (set-buffer (get-buffer "*Latex Preview Pane Welcome*"))
   (erase-buffer)
   (insert  message-latex-preview-pane-welcome)
-  (set-buffer old-buff)
-  )))
+  (set-buffer old-buff))))
 
 
 ;;
@@ -140,7 +136,6 @@
     (`gnu/linux "xdg-open")
     (`gnu/kfreebsd "xdg-open"))
   "Command used to view a file with the system's native tools.")
-
 
 ;;
 ;; Updates an external preview program of the current latex file
@@ -156,9 +151,7 @@
     (start-process "Preview"
        (get-buffer-create "*pdflatex-buffer*")
        lpp/view-buffer-command
-       (replace-regexp-in-string "\.tex$" ".pdf" (lpp/buffer-file-name))
-       )))))
-
+       (replace-regexp-in-string "\.tex$" ".pdf" (lpp/buffer-file-name)))))))
 
 ;;
 ;; If a preview pane is open, updates the preview pane on save.
@@ -180,15 +173,12 @@
   (message "Updating LaTeX Preview Pane")
   (latex-preview-pane-update-p)))))
 
-
-
 (defun lpp/last-backtrace ()
  (let ((old-buff (current-buffer)))
   (set-buffer (get-buffer "*pdflatex-buffer*"))
   (let ((error-msg (buffer-substring (point-min) (point-max))))
     (set-buffer old-buff)
     (mapconcat  'identity (reverse (split-string error-msg "\n")) "\n"))))
-
 
 (defun latex-pp-filter (condp lst)
     (delq nil
@@ -198,7 +188,6 @@
   '((t (:foreground "White" :background "Red")))
   "Face for errors"
   :group 'latex-preview-pane)
-
 
 (defun lpp/chomp (str)
       "Chomp leading and tailing whitespace from STR."
@@ -214,7 +203,6 @@
     (set-buffer old-buff)
     ;; get all the line numbers.
     (mapcar (lambda (what) (lpp/chomp (substring what 2))) (latex-pp-filter (lambda (what) (eq (string-match "l\\.[0-9]*" what) 0))  (split-string error-msg "\n"))))))
-
 
 (defun lpp/line-errors-to-layovers (errors)
   (mapcar (lambda (what) (let ( (line (string-to-number what)))
@@ -235,26 +223,21 @@
   (insert  message-no-preview-yet)
   (set-buffer (get-buffer "*Latex Preview Pane Errors*"))
   (insert  (lpp/last-backtrace))
-  (set-buffer old-buff)
-  )))
+  (set-buffer old-buff))))
 
 (boundp 'TeX-master)
-
 
 (defun lpp/is-tex (string)
   (and (string-match (rx-to-string `(: ,".tex" eos) t)
          string)
        t))
 
-
 (defun lpp/auctex-buffer-file-name ()
   (cond
    ((eq (boundp 'TeX-master) nil) (message "The TeX master variable is not defined. To use this mode you must be using AUCTeX on this buffer."))
    ((eq TeX-master nil) (message "AUCTeX is enabled but TeX-master is not yet set. Please set it."))
    ((eq TeX-master t) buffer-file-name)
-   (t (if (lpp/is-tex TeX-master) TeX-master (concat TeX-master ".tex")))
-   )
-  )
+   (t (if (lpp/is-tex TeX-master) TeX-master (concat TeX-master ".tex")))))
 
 (defun lpp/get-file ()
   "Prompt user to enter a file path, with file name completion and input history support."
@@ -273,24 +256,17 @@
 (defun lpp/buffer-file-name  ()
   (if (eq latex-preview-pane-multifile-mode 'off) buffer-file-name
     (if (eq latex-preview-pane-multifile-mode 'auctex) (lpp/auctex-buffer-file-name)
-      (lpp/prompt-and-save-buffer-file-name)))
-)
+      (lpp/prompt-and-save-buffer-file-name))))
 
 ;;
 ;; Take a string like "../main" and extract: the path leading UP
 ;;
 
-
-
-
 (defun lpp/invoke-pdf-latex-command ()
   (let ((buff (expand-file-name (lpp/buffer-file-name))) (default-directory (file-name-directory (expand-file-name (lpp/buffer-file-name)))))
     (if shell-escape-mode
   (call-process pdf-latex-command nil "*pdflatex-buffer*" nil shell-escape-mode buff)
-      (call-process pdf-latex-command nil "*pdflatex-buffer*" nil buff)
-      )
-    )
-  )
+      (call-process pdf-latex-command nil "*pdflatex-buffer*" nil buff))))
 
 
 ;;;###autoload
@@ -299,8 +275,7 @@
     (progn
       (lpp/display-backtrace)
       (remove-overlays)
-      (lpp/line-errors-to-layovers (lpp/line-errors))
-      )
+      (lpp/line-errors-to-layovers (lpp/line-errors)))
 
   (let ((pdf-filename (replace-regexp-in-string "\.tex$" ".pdf" (lpp/buffer-file-name)))
   (tex-buff (current-buffer))
@@ -315,8 +290,7 @@
           (progn
             (set-window-buffer (lpp/window-containing-preview) pdf-buff-name)
             (with-current-buffer pdf-buff-name (doc-view-revert-buffer nil t))
-            ))
-      ))))
+            ))))))
 
 ;;
 ;; Mode definition
@@ -326,32 +300,21 @@
 
 (defun lpp/set-multifile-mode (mode) (progn
                (customize-set-variable 'latex-preview-pane-multifile-mode mode)
-               (set (make-local-variable 'lpp-TeX-master) nil)
-               ))
-
-
+               (set (make-local-variable 'lpp-TeX-master) nil)))
 
 (easy-menu-define words-menu latex-preview-pane-mode-map
        "Menu for working with Latex Preview Pane"
        '("LaTeX Preview Pane"
    ["LaTeX Preview Pane Actions" nil :active nil]
-
-          ["Refresh Preview" latex-preview-pane-update]
-    ["Open Preview in External Viewer" latex-preview-update]
-    ["Disable LaTeX Preview Pane in this Buffer" (latex-preview-pane-mode 'toggle)]
-    ["Customize LaTeX Preview Pane" (customize-group 'latex-preview-pane)]
-    ["--" nil]
-    ["Multi-File Mode" nil :active nil]
-    ["Off" (lpp/set-multifile-mode 'off) :style radio :selected (eq latex-preview-pane-multifile-mode 'off)]
-    ["Use AUCTeX/TeX-master" (lpp/set-multifile-mode 'auctex) :style radio :selected (eq latex-preview-pane-multifile-mode 'auctex)]
-
-    ["Prompt" (lpp/set-multifile-mode 'prompt) :style radio :selected (eq latex-preview-pane-multifile-mode 'prompt)]
-
-    ))
-
-
-
-
+   ["Refresh Preview" latex-preview-pane-update]
+   ["Open Preview in External Viewer" latex-preview-update]
+   ["Disable LaTeX Preview Pane in this Buffer" (latex-preview-pane-mode 'toggle)]
+   ["Customize LaTeX Preview Pane" (customize-group 'latex-preview-pane)]
+   ["--" nil]
+   ["Multi-File Mode" nil :active nil]
+   ["Off" (lpp/set-multifile-mode 'off) :style radio :selected (eq latex-preview-pane-multifile-mode 'off)]
+   ["Use AUCTeX/TeX-master" (lpp/set-multifile-mode 'auctex) :style radio :selected (eq latex-preview-pane-multifile-mode 'auctex)]
+   ["Prompt" (lpp/set-multifile-mode 'prompt) :style radio :selected (eq latex-preview-pane-multifile-mode 'prompt)]))
 
 (define-key latex-preview-pane-mode-map (kbd "M-p") 'latex-preview-pane-update)
 (define-key latex-preview-pane-mode-map (kbd "s-p") 'latex-preview-pane-update)
@@ -379,15 +342,13 @@
        (if (and (boundp 'latex-preview-pane-mode) latex-preview-pane-mode)
      (init-latex-preview-pane)
    ;; otherwise, kill the window
-   (delete-window (lpp/window-containing-preview))
-   ))
+   (delete-window (lpp/window-containing-preview))))
 
 
 ;; set some messages for later
 (let ((installation-dir (if load-file-name (file-name-as-directory (file-name-directory load-file-name)) nil)))
   (defvar message-latex-preview-pane-welcome (lpp/get-message (expand-file-name "message-latex-preview-pane-welcome.txt" installation-dir)))
   (defvar message-no-preview-yet (lpp/get-message (expand-file-name "message-no-preview-yet.txt" installation-dir))))
-
 
 (defgroup latex-preview-pane nil
   "Settings that are used in the Latex Preview Pane"
@@ -401,18 +362,15 @@
 (defcustom shell-escape-mode nil
   "Should the pdflatex command use shell escaping?"
   :type '(choice (const :tag "Use shell escaping (-shell-escape)" "-shell-escape")
-                 (const :tag "Do not use shell escaping" nil)
-                 )
+                 (const :tag "Do not use shell escaping" nil))
   :group 'latex-preview-pane)
-
 
 (defcustom preview-orientation 'right
   "Which orientation to display the preview pane. Valid values are above, below, left, or right. Defaults to value right."
   :type '(choice (const :tag "Display preview on right" right)
                  (const :tag "Display preview on left" left)
      (const :tag "Display preview above" above)
-                 (const :tag "Display preview below" below)
-                 )
+                 (const :tag "Display preview below" below))
   :group 'latex-preview-pane)
 
 
@@ -420,8 +378,7 @@
   "LaTeX Preview Pane can support multifile TeX projects. This variable tells LPP how to behave in different situations."
   :type '(choice (const :tag "Off" off)
                  (const :tag "Use AUCTeX (via the TeX-master variable)" auctex)
-     (const :tag "Prompt" prompt)
-                 )
+     (const :tag "Prompt" prompt))
   :group 'latex-preview-pane)
 
 (defcustom latex-preview-pane-use-frame nil
@@ -441,8 +398,7 @@
     "message-latex-preview-pane-welcome.txt"
     "message-no-preview-yet.txt"
     "ss-error.PNG"
-    "ss.PNG")
-)
+    "ss.PNG"))
 
 ;; for making distributions
 (defun lpp/make-dist ()
@@ -456,20 +412,12 @@
     (mapc (lambda (f)
       (progn
         (message (concat "Copying " f "..."))
-        (call-process "cp" nil "*dist-buffer*" nil f dist-dir)
-        ))
+        (call-process "cp" nil "*dist-buffer*" nil f dist-dir)))
     (lpp/packing-list))
-
-
     (call-process "tar" nil "*dist-buffer*" nil  "-cvf" dist-file (concat dist-dir "/"))
-    (message (concat "Package " dist-file " created."))
-    )
-
-))
+    (message (concat "Package " dist-file " created.")))))
 
 ;; (lpp/make-dist)
-
-
 
 (provide 'latex-preview-pane)
 
