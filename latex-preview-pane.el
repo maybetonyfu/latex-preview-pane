@@ -46,7 +46,7 @@
 (require 'doc-view)
 (require 'cl-lib)
 
-(defvar latex-preview-pane-current-version "20151021")
+(defvar latex-preview-pane-current-version "20250322")
 ;;
 ;; Get rid of free variables warnings
 ;;
@@ -69,7 +69,7 @@
 
 (defun lpp/window-containing-preview ()
   (let (windows i docViewWindow)
-    (setq windows (cl-reduce #'append (mapcar `window-list (frame-list))))
+    (setq windows (window-list))
     (setq i 0)
     (progn
     (while (and (not docViewWindow) (<= i (length windows)))
